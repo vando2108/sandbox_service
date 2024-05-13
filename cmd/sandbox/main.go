@@ -9,6 +9,7 @@ import (
 
 func main() {
 	sandboxServer := sandbox.NewServer()
+	defer sandboxServer.Stop(context.TODO())
 	if err := sandboxServer.Start(context.TODO()); err != nil {
 		log.Fatalln("failed to start the server:", err)
 	}

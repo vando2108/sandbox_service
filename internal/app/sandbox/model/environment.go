@@ -1,6 +1,6 @@
 package model
 
-type Requirements struct {
+type Environment struct {
 	ID                string
 	UserID            string
 	HardwareInput     string

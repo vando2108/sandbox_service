@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+enum ErrorCode {
+  SUCCESS = 0;
+  NONCE_MISMATCH = 1;
+  INTERNAL_SERVER_ERROR = 2;
+  NONCE_NOT_EXSIST = 3;
+  PUBLIC_KEY_IS_NOT_VALID = 4;
+  USER_EXISTSED = 5;
+  INVALID_SIGNATURE = 6;
+  USER_NOT_EXISTED = 7;
+}

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package sandbox;
 
+import "error.proto";
+
 option go_package = "./pb";
 
 message Requirements {
@@ -10,7 +12,6 @@ message Requirements {
   repeated string Image = 3;
   repeated string ServiceName = 4;
   int32 NumberOfInstance = 5;
-  string Signature = 6;
 }
 
 service Sandbox {
@@ -21,9 +22,12 @@ service Sandbox {
 message CreateNewEnvironmentRequest {
   string Publickey = 1;
   Requirements Requirements = 2;
+  string Signature = 6;
 }
 
 message CreateNewEnvironmentResponse {
   bool Success = 1;
   string EnvID = 2;
+  ErrorCode ErrorCode = 3;
+  string ErrorMessage = 4;
 }

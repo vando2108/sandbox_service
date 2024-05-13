@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"strings"
 )
@@ -13,4 +15,11 @@ func ValidatePublickey(pubkey string) error {
 	}
 
 	return nil
+}
+
+func PublickeyToString(publickey *ecdsa.PublicKey) string {
+	x := publickey.X.Bytes()
+	y := publickey.Y.Bytes()
+	xy := append(x, y...)
+	return hex.EncodeToString(xy)
 }

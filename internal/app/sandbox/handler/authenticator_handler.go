@@ -15,31 +15,21 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/vando2108/sandbox_service/internal/app/sandbox/model"
-	memRepo "github.com/vando2108/sandbox_service/internal/app/sandbox/repository/implement/memory"
-	redisRepo "github.com/vando2108/sandbox_service/internal/app/sandbox/repository/implement/redis"
 	repoInterface "github.com/vando2108/sandbox_service/internal/app/sandbox/repository/interface"
 	"github.com/vando2108/sandbox_service/pb"
 	"github.com/vando2108/sandbox_service/utils"
 )
 
-var errorMessages = map[pb.ErrorCode]string{
-	pb.ErrorCode_NONCE_MISMATCH:          "Provided nonce does not match",
-	pb.ErrorCode_INTERNAL_SERVER_ERROR:   "Internal server error",
-	pb.ErrorCode_NONCE_NOT_EXSIST:        "Nonce does not exist or has expired. Please register again.",
-	pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID: "Publickey is not valid",
-	pb.ErrorCode_USER_EXISTSED:           "User existed",
-}
-
 type AuthenticatorHandler struct {
-	nonceCache repoInterface.NonceCacheRepository
-	userRepo   repoInterface.UserRepository
+	nonceCache *repoInterface.NonceCacheRepository
+	userRepo   *repoInterface.UserRepository
 	pb.UnimplementedAuthenticatorServer
 }
 
-func NewAuthenticatorHandler(redisClient *redis.Client) *AuthenticatorHandler {
+func NewAuthenticatorHandler(nonceCache *repoInterface.NonceCacheRepository, userRepo *repoInterface.UserRepository) *AuthenticatorHandler {
 	return &AuthenticatorHandler{
-		nonceCache: redisRepo.NewRedisNonceCache(redisClient),
-		userRepo:   memRepo.NewMemUserRepository(),
+		nonceCache: nonceCache,
+		userRepo:   userRepo,
 	}
 }
 
@@ -49,15 +39,15 @@ func (h *AuthenticatorHandler) Register(ctx context.Context, req *pb.RegisterReq
 		return &pb.RegisterResponse{
 			Success:      false,
 			ErrorCode:    pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID,
-			ErrorMessage: errorMessages[pb.ErrorCode(pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID)],
+			ErrorMessage: ErrorMessages[pb.ErrorCode(pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID)],
 		}, nil
 	}
 
-	if _, err := h.userRepo.FindOneByPublickey(ctx, req.Publickey); err == nil || err.Error() != "user not found" {
+	if _, err := (*h.userRepo).FindOneByPublickey(ctx, req.Publickey); err == nil || err.Error() != "user not found" {
 		return &pb.RegisterResponse{
 			Success:      false,
 			ErrorCode:    pb.ErrorCode_USER_EXISTSED,
-			ErrorMessage: errorMessages[pb.ErrorCode_USER_EXISTSED],
+			ErrorMessage: ErrorMessages[pb.ErrorCode_USER_EXISTSED],
 		}, nil
 	}
 
@@ -72,7 +62,7 @@ func (h *AuthenticatorHandler) Register(ctx context.Context, req *pb.RegisterReq
 		return &pb.RegisterResponse{
 			Success:      false,
 			ErrorCode:    pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID,
-			ErrorMessage: errorMessages[pb.ErrorCode(pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID)],
+			ErrorMessage: ErrorMessages[pb.ErrorCode(pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID)],
 		}, nil
 	}
 
@@ -85,11 +75,11 @@ func (h *AuthenticatorHandler) Register(ctx context.Context, req *pb.RegisterReq
 		return &pb.RegisterResponse{
 			Success:      false,
 			ErrorCode:    pb.ErrorCode_INTERNAL_SERVER_ERROR,
-			ErrorMessage: errorMessages[pb.ErrorCode_INTERNAL_SERVER_ERROR],
+			ErrorMessage: ErrorMessages[pb.ErrorCode_INTERNAL_SERVER_ERROR],
 		}, nil
 	}
 
-	h.nonceCache.SetNonce(ctx, req.Publickey, nonce, time.Duration(5*time.Minute))
+	(*h.nonceCache).SetNonce(ctx, req.Publickey, nonce, time.Duration(5*time.Minute))
 
 	return &pb.RegisterResponse{
 		Success:     true,
@@ -102,23 +92,23 @@ func (h *AuthenticatorHandler) NonceConfirm(ctx context.Context, req *pb.NonceCo
 		return &pb.NonceConfirmResponse{
 			Success:      false,
 			ErrorCode:    pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID,
-			ErrorMessage: errorMessages[pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID],
+			ErrorMessage: ErrorMessages[pb.ErrorCode_PUBLIC_KEY_IS_NOT_VALID],
 		}, nil
 	}
 
-	nonce, err := h.nonceCache.GetNonce(ctx, req.Publickey)
+	nonce, err := (*h.nonceCache).GetNonce(ctx, req.Publickey)
 	if err != nil {
 		if err == redis.Nil {
 			return &pb.NonceConfirmResponse{
 				Success:      false,
 				ErrorCode:    pb.ErrorCode_NONCE_NOT_EXSIST,
-				ErrorMessage: errorMessages[pb.ErrorCode_NONCE_NOT_EXSIST],
+				ErrorMessage: ErrorMessages[pb.ErrorCode_NONCE_NOT_EXSIST],
 			}, nil
 		} else {
 			return &pb.NonceConfirmResponse{
 				Success:      false,
 				ErrorCode:    pb.ErrorCode_INTERNAL_SERVER_ERROR,
-				ErrorMessage: errorMessages[pb.ErrorCode_INTERNAL_SERVER_ERROR],
+				ErrorMessage: ErrorMessages[pb.ErrorCode_INTERNAL_SERVER_ERROR],
 			}, fmt.Errorf("failed to get nonce: %w", err)
 		}
 	}
@@ -127,18 +117,18 @@ func (h *AuthenticatorHandler) NonceConfirm(ctx context.Context, req *pb.NonceCo
 		return &pb.NonceConfirmResponse{
 			Success:      false,
 			ErrorCode:    pb.ErrorCode_NONCE_MISMATCH,
-			ErrorMessage: errorMessages[pb.ErrorCode_NONCE_MISMATCH],
+			ErrorMessage: ErrorMessages[pb.ErrorCode_NONCE_MISMATCH],
 		}, nil
 	} else {
 		user := &model.User{
 			Publickey: req.Publickey,
 		}
 
-		if err := h.userRepo.Insert(ctx, user); err != nil {
+		if err := (*h.userRepo).Insert(ctx, user); err != nil {
 			return &pb.NonceConfirmResponse{
 				Success:      false,
 				ErrorCode:    pb.ErrorCode_USER_EXISTSED,
-				ErrorMessage: errorMessages[pb.ErrorCode_USER_EXISTSED],
+				ErrorMessage: ErrorMessages[pb.ErrorCode_USER_EXISTSED],
 			}, nil
 		}
 

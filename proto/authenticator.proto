@@ -2,16 +2,9 @@ syntax = "proto3";
 
 package authenticator;
 
-option go_package = "./pb";
+import "error.proto";
 
-enum ErrorCode {
-  SUCCESS = 0;
-  NONCE_MISMATCH = 1;
-  INTERNAL_SERVER_ERROR = 2;
-  NONCE_NOT_EXSIST = 3;
-  PUBLIC_KEY_IS_NOT_VALID = 4;
-  USER_EXISTSED = 5;
-}
+option go_package = "./pb";
 
 service Authenticator {
   rpc Register(RegisterRequest) returns (RegisterResponse);

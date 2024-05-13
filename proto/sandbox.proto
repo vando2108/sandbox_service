@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package sandbox;
+
+option go_package = "./pb";
+
+message Requirements {
+  string HardwareInput = 1;
+  string SnapshotUrl = 2;
+  repeated string Image = 3;
+  repeated string ServiceName = 4;
+  int32 NumberOfInstance = 5;
+  string Signature = 6;
+}
+
+service Sandbox {
+  rpc CreateNewEnvironment(CreateNewEnvironmentRequest)
+      returns (CreateNewEnvironmentResponse);
+}
+
+message CreateNewEnvironmentRequest {
+  string Publickey = 1;
+  Requirements Requirements = 2;
+}
+
+message CreateNewEnvironmentResponse {
+  bool Success = 1;
+  string EnvID = 2;
+}

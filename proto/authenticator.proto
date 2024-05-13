@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package authenticator;
+
+option go_package = "./pb";
+
+enum ErrorCode {
+  SUCCESS = 0;
+  NONCE_MISMATCH = 1;
+  INTERNAL_SERVER_ERROR = 2;
+  NONCE_NOT_EXSIST = 3;
+  PUBLIC_KEY_IS_NOT_VALID = 4;
+  USER_EXISTSED = 5;
+}
+
+service Authenticator {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc NonceConfirm(NonceConfirmRequest) returns (NonceConfirmResponse);
+}
+
+message RegisterRequest { string Publickey = 1; }
+
+message RegisterResponse {
+  bool Success = 1;
+  string HashedNonce = 2;
+  ErrorCode ErrorCode = 3;
+  string ErrorMessage = 4;
+}
+
+message NonceConfirmRequest {
+  string Publickey = 1;
+  string Nonce = 2;
+}
+
+message NonceConfirmResponse {
+  bool Success = 1;
+  ErrorCode ErrorCode = 2;
+  string ErrorMessage = 3;
+}

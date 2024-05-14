@@ -1,4 +1,6 @@
 # Project details
+## Read the cmd/README.md to know how to run this project
+
 ## Project layout
 Here is a brief explanation of my project structure, which is based on the guidelines from ```golang-standards/project-layout```.
 ```
